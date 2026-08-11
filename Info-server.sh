@@ -20,56 +20,154 @@ EOF
 
 menu_inicial(){
 
-	printf "[1] SISTEMA "
-	printf "[2] REDE "
-	printf "[3] ARMAZENAMENTO "	
-	printf "[4] CPU E MEMORIA "
-	printf "[5] SERVICOS "
-	printf "[6] PROCESSOS "	
-	printf "[7] DOCKER "
-	printf "[8] RELATORIO COMPLETO "
-	printf "[0] SISTEMA "	
+	printf " [1] SISTEMA\n "
+	printf "[2] REDE\n "
+	printf "[3] ARMAZENAMENTO\n "	
+	printf "[4] CPU E MEMORIA\n "
+	printf "[5] SERVICOS\n "
+	printf "[6] PROCESSOS\n "	
+	printf "[7] DOCKER\n "
+	printf "[8] RELATORIO COMPLETO\n "
+	printf "[0] SISTEMA\n "	
 
 }
 
-#FUNCAO DE INFORMACOES DO SISTEM
 
+
+#FUNCAO DE INFORMACOES DO SISTEMA
+
+#abstracao de informacoes do sistema
+
+hostname=$(hostname)
+
+distribuicao=$(grep -iE '\bname\b' /etc/os-release 2>/dev/null | cut -d '"' -f2)
+
+versao_distro=$(grep -iE '\bversion\b' /etc/os-release 2>/dev/null | cut -d '"' -f2 | cut -d ' ' -f1)
+
+kernel=$(uname -r)
+
+arquitetura=$(uname -m)
+
+data=$(date)
+
+tempo_ligado=$(uptime -p 2>/dev/null | cut -d ' ' -f2-7)
+
+ultimo_boot=$(who -b 2>/dev/null | awk '{print $4" "$5}')
+
+usuarios_conectados=$(who -u 2>/dev/null | awk '{print $1}' | sort -u)
+
+# montando a funcao da aba de informacao do sistema
 sistema(){
-
-
-	echo "Hostname: $(hostname)"
-
-	echo "Distribuicao: $(cat /etc/os-release | grep -iE '\bname\b' | cut -d '"' -f2)"
-
-	echo "Versao da distro: $(cat /etc/os-release | grep -iE '\bversion\b' | cut -d '"' -f2 | cut -d ' ' -f1)"
-
-	echo "Kernel: $(uname -sr)"
-
-	echo "Arquitetura: $(uname -m)"
-
-	echo "Data e Hora: $(date)"
 	
-	echo "Tempo ligado: $(uptime -p | cut -d ' ' -f2-7)"
-	
-	echo "Data do Ultimo Boot: $(who -b | awk '{print $4" "$5}')"	
+	printf "==================== INFORMACOES DO SISTEMA ====================\n\n"
 
-	echo "Usuarios conectados: $(who -u | awk '{print $1}' | sort | uniq)"
+	printf "Hostname: $hostname\n"
+	printf "Distribuicao: ${distribuicao:-"Desconhecida"}\n"
+	printf "Versao da distro:${versao_distro:-"Desconhecida"}\n"
+	printf "Kernel: $kernel \n"
+	printf "Arquitetura: $arquitetura \n"
+	printf "Data e Hora: $data \n"
+	printf "Tempo ligado: ${tempo_ligado:-"Indisponivel"} \n"
+	printf "Data do Ultimo Boot: ${ultimo_boot:-"Indisponivel"} \n"
+	printf "Usuarios conectados: ${usuarios_conectados:-"Indisponivel"} \n"
+
+	printf "==================================================================\n\n"
 }
 
 
-#FUNCAO DA INFORMACAO DA REDE
+
+#FUNCAO DE RECURSOS DO SISTEMA
+
+#abstracao de recursos do sistema
+
+#CPU
+
+uso_cpu=$(top -b -n 1 | grep -i "%cpu(s)" | awk '{print $8}')
+
+numero_cpu=$(lscpu | grep -i "cpu(s):" | awk '{print $2}')
+
+numero_nucleos=$(lscpu | grep -i "núcleo(s)" | awk '{print $2}')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#FUNCAO DE INFORMACoes DE REDE
+
+#abstracao de informacoes da rede
+
+interface_ativa=$(ip route show default | awk '{print $5}')
+
+endereco_ip_privado=$(ip -4 route get 8.8.8.8 | awk '{print $7}')
+
+mascara_rede=$(ifconfig | grep $(endereco_ip_privado | cut -d ' ' -f7)| awk '{print $4}')
+
+getway=$(ip -4 route get 8.8.8.8 | awk '{print $3}')
+
+servidor_dns=$(grep -i nameserver /etc/resolv.conf 2>/dev/null | awk '{print $2}' )
+
+mac_adress=$(ip -br link | grep -i $(interface_ativa) | awk '{print $3}')
+
+enderco_ip_publico=$(curl ifconfig-me 2>/dev/null)
+
+latencia_internet=$(pig -c 3 8.8.8.8 | head -n 1 | cut -d '/' -f5)
+
+#funcao de teste de conectividade com a internet
+teste_conectividade(){
+
+	if ping -c 1 -w 2 8.8.8.8 &>/dev/null; then
+		printf "ATIVA"
+	else 
+		printf "INATIVA"
+	fi
+}
+
+
+
+#montando funcao da aba de rede do sistema
 
 rede(){
 
+	printf "==================== INFORMACOES DE REDE ====================\n\n"
 
-	echo "Interface ativa: $(ip a | grep -i up | grep -iv down | grep -iv know | cut -d ':' -f2)"
-
-	echo "Endereco IP: $(ip -4 route get 8.8.8.8 | cut -d ' ' -f7) "
-	
-	echo "Mascara: $(ifconfig | grep $(ip -4 route get 8.8.8.8 | cut -d ' ' -f7) | awk '{print f$4}')"
-
-	echo "Geteway IP: $(ip -4 route get 8.8.8.8 | cut -d ' ' -f3)"
-
-	echo "Servidor-DNS: $(nslookup a | grep -i server: | awk '{print $2}')"
+	printf "Interface ativa: $interface_ativa\n"
+	printf "IP privado: $endereco_ip_privado\n"
+	printf "Mascara: $mascara_rede\n"
+	printf "Geteway IP: $getway\n"
+	printf "Servidor DNS: ${servidor_dns:-"Indisponivel"}\n"
+	printf "MAC adress: $mac_adress\n"
+	printf "IP publico: $enderco_ip_publico\n"
+	printf "Status de conexao da rede: $conectividade_internete"
+	printf "Latencia da rede: $latencia_internet\n"
+	printf "==================================================================\n\n"
 
 }
+
+Template
+menu_inicial
+sistema
+rede
+
+
